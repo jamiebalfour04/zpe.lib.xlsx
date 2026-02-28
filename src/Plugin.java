@@ -1,0 +1,716 @@
+/*
+ * zpe.lib.xlsx
+ *
+ * Apache POI based XLSX support for ZPE/YASS.
+ *
+ * Global functions:
+ *   - xlsx_new() => ZPEXLSXWorkbook
+ *   - xlsx_open(string path) => ZPEXLSXWorkbook | false
+ *
+ * Objects:
+ *   - ZPEXLSXWorkbook (workbook)
+ *   - ZPEXLSXSheet (sheet)
+ *
+ * Permissions (suggested):
+ *   - In-memory creation: 0
+ *   - File open/save: 3
+ */
+
+import jamiebalfour.HelperFunctions;
+import jamiebalfour.generic.JBBinarySearchTree;
+import jamiebalfour.zpe.core.*;
+import jamiebalfour.zpe.interfaces.*;
+import jamiebalfour.zpe.types.ZPEBoolean;
+import jamiebalfour.zpe.types.ZPEString;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Plugin implements ZPELibrary {
+
+  @Override
+  public Map<String, ZPECustomFunction> getFunctions() {
+    HashMap<String, ZPECustomFunction> arr = new HashMap<>();
+    arr.put("xlsx_new", new XLSXNew());
+    arr.put("xlsx_open", new XLSXOpen());
+    return arr;
+  }
+
+  @Override
+  public Map<String, Class<? extends ZPEStructure>> getObjects() {
+    return null;
+  }
+
+  @Override
+  public boolean supportsWindows() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsMacOs() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsLinux() {
+    return true;
+  }
+
+  @Override
+  public String getName() {
+    return "libXLSX";
+  }
+
+  @Override
+  public String getVersionInfo() {
+    return "1.0";
+  }
+
+  // ----------------------------
+  // Global function: xlsx_new()
+  // ----------------------------
+  public static class XLSXNew implements ZPECustomFunction {
+
+    @Override
+    public String getManualEntry() {
+      return "Creates a new XLSX workbook in memory.";
+    }
+
+    @Override
+    public String getManualHeader() {
+      return "xlsx_new";
+    }
+
+    @Override
+    public int getMinimumParameters() {
+      return 0;
+    }
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(HashMap<String, Object> params, ZPERuntimeEnvironment runtime, ZPEFunction fn) {
+      ZPEXLSXWorkbookObject wb = new ZPEXLSXWorkbookObject(runtime, fn);
+      wb.newFile();
+      return wb;
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public byte getReturnType() {
+      return YASSByteCodes.MIXED_TYPE;
+    }
+  }
+
+  // -----------------------------
+  // Global function: xlsx_open()
+  // -----------------------------
+  public static class XLSXOpen implements ZPECustomFunction {
+
+    @Override
+    public String getManualEntry() {
+      return "Opens an XLSX workbook from disk.";
+    }
+
+    @Override
+    public String getManualHeader() {
+      return "xlsx_open";
+    }
+
+    @Override
+    public int getMinimumParameters() {
+      return 1;
+    }
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"path"};
+    }
+
+    @Override
+    public ZPEType MainMethod(HashMap<String, Object> params, ZPERuntimeEnvironment runtime, ZPEFunction fn) {
+      try {
+        String path = params.get("path").toString();
+        ZPEXLSXWorkbookObject wb = new ZPEXLSXWorkbookObject(runtime, fn);
+        if (wb.open(path)) return wb;
+        return new ZPEBoolean(false);
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 3;
+    }
+
+    @Override
+    public byte getReturnType() {
+      return YASSByteCodes.MIXED_TYPE;
+    }
+  }
+}
+
+
+/* ============================================================
+ * ZPEXLSXWorkbookObject
+ * ============================================================ */
+class ZPEXLSXWorkbookObject extends ZPEStructure {
+
+  private static final long serialVersionUID = 3341840321048823111L;
+
+  private XSSFWorkbook workbook;
+
+  public ZPEXLSXWorkbookObject(ZPERuntimeEnvironment z, ZPEPropertyWrapper parent) {
+    super(z, parent, "ZPEXLSXWorkbook");
+
+    addNativeMethod("new_file", new new_file_Command());
+    addNativeMethod("open", new open_Command());
+    addNativeMethod("save", new save_Command());
+    addNativeMethod("close", new close_Command());
+
+    addNativeMethod("add_sheet", new add_sheet_Command());
+    addNativeMethod("get_sheet", new get_sheet_Command());
+    addNativeMethod("get_sheet_count", new get_sheet_count_Command());
+  }
+
+  void newFile() {
+    closeQuietly();
+    workbook = new XSSFWorkbook();
+    // Create a default sheet for convenience (optional):
+    workbook.createSheet("Sheet1");
+  }
+
+  boolean open(String path) {
+    closeQuietly();
+    try (FileInputStream fis = new FileInputStream(path)) {
+      workbook = new XSSFWorkbook(fis);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  boolean save(String path) {
+    if (workbook == null) return false;
+    try (FileOutputStream fos = new FileOutputStream(path)) {
+      workbook.write(fos);
+      fos.flush();
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  boolean close() {
+    return closeQuietly();
+  }
+
+  private boolean closeQuietly() {
+    try {
+      if (workbook != null) {
+        workbook.close();
+      }
+      workbook = null;
+      return true;
+    } catch (Exception e) {
+      workbook = null;
+      return false;
+    }
+  }
+
+  XSSFWorkbook getWorkbook() {
+    return workbook;
+  }
+
+  // ---------- Native Methods ----------
+
+  static class new_file_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      ((ZPEXLSXWorkbookObject) parent).newFile();
+      return parent;
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "new_file";
+    }
+  }
+
+  static class open_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"path"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"string"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        String path = parameters.get("path").toString();
+        return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).open(path));
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 3;
+    }
+
+    @Override
+    public String getName() {
+      return "open";
+    }
+  }
+
+  static class save_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"path"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"string"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        String path = parameters.get("path").toString();
+        return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).save(path));
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 3;
+    }
+
+    @Override
+    public String getName() {
+      return "save";
+    }
+  }
+
+  static class close_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).close());
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "close";
+    }
+  }
+
+  static class add_sheet_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"name"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"string"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
+        if (wb.getWorkbook() == null) return new ZPEBoolean(false);
+
+        String name = parameters.get("name").toString();
+        XSSFSheet sheet = wb.getWorkbook().createSheet(name);
+        return new ZPEXLSXSheetObject(wb.getRuntime(), parent, wb, sheet);
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "add_sheet";
+    }
+  }
+
+  static class get_sheet_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"name_or_index"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"mixed"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
+        if (wb.getWorkbook() == null) return new ZPEBoolean(false);
+
+        ZPEType v = parameters.get("name_or_index");
+        XSSFSheet sheet;
+
+        // If it looks like a number, treat as index
+        String s = v.toString();
+        Integer idx = null;
+        try {
+          idx = HelperFunctions.stringToInteger(s);
+        } catch (Exception ignored) {
+        }
+
+        if (idx != null) {
+          if (idx < 0 || idx >= wb.getWorkbook().getNumberOfSheets()) return new ZPEBoolean(false);
+          sheet = wb.getWorkbook().getSheetAt(idx);
+        } else {
+          sheet = wb.getWorkbook().getSheet(s);
+        }
+
+        if (sheet == null) return new ZPEBoolean(false);
+        return new ZPEXLSXSheetObject(wb.getRuntime(), parent, wb, sheet);
+
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "get_sheet";
+    }
+  }
+
+  static class get_sheet_count_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
+        if (wb.getWorkbook() == null) return new ZPEBoolean(false);
+
+        int n = wb.getWorkbook().getNumberOfSheets();
+        // If you have ZPENumber, return it instead of string:
+        // return new ZPENumber(n);
+        return ZPEString.newStr(String.valueOf(n));
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "get_sheet_count";
+    }
+  }
+}
+
+
+/* ============================================================
+ * ZPEXLSXSheetObject
+ * ============================================================ */
+class ZPEXLSXSheetObject extends ZPEStructure {
+
+  private static final long serialVersionUID = 7412849723950412345L;
+
+  private final ZPEXLSXWorkbookObject workbookObj;
+  private final XSSFSheet sheet;
+
+  public ZPEXLSXSheetObject(ZPERuntimeEnvironment z, ZPEPropertyWrapper parent, ZPEXLSXWorkbookObject workbookObj, XSSFSheet sheet) {
+    super(z, parent, "ZPEXLSXSheet");
+    this.workbookObj = workbookObj;
+    this.sheet = sheet;
+
+    addNativeMethod("set_cell", new set_cell_Command());
+    addNativeMethod("get_cell", new get_cell_Command());
+    addNativeMethod("get_last_row", new get_last_row_Command());
+    addNativeMethod("get_name", new get_name_Command());
+  }
+
+  private Row ensureRow(int rowIndex) {
+    Row r = sheet.getRow(rowIndex);
+    if (r == null) r = sheet.createRow(rowIndex);
+    return r;
+  }
+
+  private Cell ensureCell(Row r, int colIndex) {
+    Cell c = r.getCell(colIndex);
+    if (c == null) c = r.createCell(colIndex);
+    return c;
+  }
+
+  // ---------- Native Methods ----------
+
+  class set_cell_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"row", "col", "value"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"number", "number", "mixed"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        int row = HelperFunctions.stringToInteger(parameters.get("row").toString());
+        int col = HelperFunctions.stringToInteger(parameters.get("col").toString());
+        ZPEType value = parameters.get("value");
+
+        if (row < 0 || col < 0) return new ZPEBoolean(false);
+
+        Row r = ensureRow(row);
+        Cell c = ensureCell(r, col);
+
+        // Best-effort typing:
+        String vs = (value == null) ? "" : value.toString();
+
+        // If it's "true/false" -> boolean
+        if ("true".equalsIgnoreCase(vs) || "false".equalsIgnoreCase(vs)) {
+          c.setCellValue(Boolean.parseBoolean(vs));
+          return new ZPEBoolean(true);
+        }
+
+        // If it looks numeric -> number
+        try {
+          double d = Double.parseDouble(vs.trim());
+          c.setCellValue(d);
+          return new ZPEBoolean(true);
+        } catch (Exception ignored) {
+        }
+
+        // Otherwise string
+        c.setCellValue(vs);
+        return new ZPEBoolean(true);
+
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "set_cell";
+    }
+  }
+
+  class get_cell_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{"row", "col"};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{"number", "number"};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        int row = HelperFunctions.stringToInteger(parameters.get("row").toString());
+        int col = HelperFunctions.stringToInteger(parameters.get("col").toString());
+
+        if (row < 0 || col < 0) return new ZPEBoolean(false);
+
+        Row r = sheet.getRow(row);
+        if (r == null) return new ZPEString("");
+
+        Cell c = r.getCell(col);
+        if (c == null) return new ZPEString("");
+
+        switch (c.getCellType()) {
+          case STRING:
+            return new ZPEString(c.getStringCellValue());
+          case BOOLEAN:
+            return new ZPEBoolean(c.getBooleanCellValue());
+          case NUMERIC:
+            // If you have ZPENumber, return it instead:
+            // return new ZPENumber(c.getNumericCellValue());
+            return ZPEString.newStr(String.valueOf(c.getNumericCellValue()));
+          case FORMULA:
+            // Return formula text (simple + predictable)
+            return new ZPEString(c.getCellFormula());
+          case BLANK:
+          default:
+            return new ZPEString("");
+        }
+
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "get_cell";
+    }
+  }
+
+  class get_last_row_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        int last = sheet.getLastRowNum();
+        // If you have ZPENumber, return it instead:
+        // return new ZPENumber(last);
+        return ZPEString.newStr(String.valueOf(last));
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "get_last_row";
+    }
+  }
+
+  class get_name_Command implements ZPEObjectNativeMethod {
+
+    @Override
+    public String[] getParameterNames() {
+      return new String[]{};
+    }
+
+    @Override
+    public String[] getParameterTypes() {
+      return new String[]{};
+    }
+
+    @Override
+    public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      try {
+        return new ZPEString(sheet.getSheetName());
+      } catch (Exception e) {
+        return new ZPEBoolean(false);
+      }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+      return 0;
+    }
+
+    @Override
+    public String getName() {
+      return "get_name";
+    }
+  }
+}

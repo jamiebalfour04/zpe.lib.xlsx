@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="zpe.lib.xlsx">
+    <output-path>$PROJECT_DIR$/build</output-path>
+    <root id="archive" name="zpe.lib.xlsx.jar">
+      <element id="module-output" name="zpe.lib.xlsx" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/commons-collections4-4.5.0-M3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/commons-compress-1.27.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/curvesapi-1.08.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/poi-5.4.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/poi-ooxml-5.4.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/xmlbeans-5.3.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
