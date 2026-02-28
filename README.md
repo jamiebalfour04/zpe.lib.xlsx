@@ -41,19 +41,19 @@ import "zpe.lib.xlsx"
 
 wb = xlsx_new()
 
-sheet = wb.get_sheet(0)
+sheet = wb->get_sheet(0)
 
-sheet.set_cell(0, 0, "Name")
-sheet.set_cell(0, 1, "Age")
+sheet->set_cell(0, 0, "Name")
+sheet->set_cell(0, 1, "Age")
 
-sheet.set_cell(1, 0, "Jamie")
-sheet.set_cell(1, 1, 34)
+sheet->set_cell(1, 0, "Jamie")
+sheet->set_cell(1, 1, 34)
 
-sheet.set_cell(2, 0, "Alice")
-sheet.set_cell(2, 1, 12)
+sheet->set_cell(2, 0, "Alice")
+sheet->set_cell(2, 1, 12)
 
-wb.save("example.xlsx")
-wb.close()
+wb->save("example.xlsx")
+wb->close()
 
 </pre>
 
