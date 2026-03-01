@@ -2,7 +2,6 @@
   <library name="poi-5.4.1">
     <CLASSES>
       <root url="jar://$USER_HOME$/Sync/Programs/JARs/poi-5.4.1.jar!/" />
-      <root url="jar://$USER_HOME$/Sync/Programs/JARs/poi-ooxml-5.4.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

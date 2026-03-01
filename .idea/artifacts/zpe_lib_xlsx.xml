@@ -6,9 +6,13 @@
       <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/commons-collections4-4.5.0-M3.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/commons-compress-1.27.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/curvesapi-1.08.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/xmlbeans-5.3.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/commons-io-2.19.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/log4j-api-2.20.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/log4j-core-2.20.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/poi-5.4.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/poi-ooxml-5.4.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/xmlbeans-5.3.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Sync/Programs/JARs/poi-ooxml-lite-5.4.1.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
