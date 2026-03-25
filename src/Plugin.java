@@ -19,10 +19,10 @@
 import jamiebalfour.HelperFunctions;
 import jamiebalfour.generic.JBBinarySearchTree;
 import jamiebalfour.zpe.core.*;
-import jamiebalfour.zpe.interfaces.*;
-import jamiebalfour.zpe.types.ZPEBoolean;
-import jamiebalfour.zpe.types.ZPENumber;
-import jamiebalfour.zpe.types.ZPEString;
+import jamiebalfour.zpe.core.interfaces.*;
+import jamiebalfour.zpe.core.types.ZPEBoolean;
+import jamiebalfour.zpe.core.types.ZPENumber;
+import jamiebalfour.zpe.core.types.ZPEString;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
