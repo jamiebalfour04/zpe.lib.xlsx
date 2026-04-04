@@ -56,6 +56,11 @@ public class Plugin implements ZPELibrary {
   }
 
   @Override
+  public Map<String, ZPEModule> getModules() {
+    return new HashMap<>();
+  }
+
+  @Override
   public boolean supportsWindows() {
     return true;
   }
@@ -266,7 +271,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         ((ZPEXLSXWorkbookObject) parent).newFile();
         return parent;
       }
@@ -299,7 +304,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           String path = parameters.get("path").toString();
           return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).open(path));
@@ -336,7 +341,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           String path = parameters.get("path").toString();
           return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).save(path));
@@ -373,7 +378,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         return new ZPEBoolean(((ZPEXLSXWorkbookObject) parent).close());
       }
 
@@ -405,7 +410,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
           if (wb.getWorkbook() == null) return new ZPEBoolean(false);
@@ -449,7 +454,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
           if (wb.getWorkbook() == null) return new ZPEBoolean(false);
@@ -509,7 +514,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           ZPEXLSXWorkbookObject wb = (ZPEXLSXWorkbookObject) parent;
           if (wb.getWorkbook() == null) return new ZPEBoolean(false);
@@ -589,7 +594,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           int row = asInt(parameters.get("row"));
           int col = asInt(parameters.get("col"));
@@ -653,7 +658,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           int row = asInt(parameters.get("row"));
           int col = asInt(parameters.get("col"));
@@ -717,7 +722,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           return new ZPENumber(sheet.getLastRowNum());
         } catch (Exception e) {
@@ -753,7 +758,7 @@ public class Plugin implements ZPELibrary {
       }
 
       @Override
-      public ZPEType MainMethod(JBBinarySearchTree<String, ZPEType> parameters, ZPEObject parent) {
+      public ZPEType run(HashMap<String, ZPEType> parameters, ZPEObject parent) {
         try {
           return new ZPEString(sheet.getSheetName());
         } catch (Exception e) {
